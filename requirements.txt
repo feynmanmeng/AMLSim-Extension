@@ -1,0 +1,9 @@
+numpy
+pandas
+networkx
+neo4j
+kneed
+kmodes
+geatpy
+scikit-opt
+scikit-learn
