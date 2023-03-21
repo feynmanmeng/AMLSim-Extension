@@ -4,10 +4,12 @@ To create complex money laundering networks according to transaction schemes def
 
 
 
-- **csv_to_neo4j**
-  - **py2neo4j_clear.py** (Clear the data in neo4j.)
-  - **py2neo4j_nodes.py** (Import all nodes.)
-  - **py2neo4j_edges.py** (Import all edges.)
+- **neo4j_plot**
+  - **autoloader.py** (nx to neo4j.)
+  - **my_neo4j_clear.py** (Clear the data in neo4j.)
+  - **my_neo4j_nodes.py** (Import all nodes.)
+  - **my_neo4j_edges.py** (Import all edges.)
+  - **neo4j.json** (username, password, database.)
 - **data**
 - **gen_ml_graph.py** (Basic components for building a network.)
 - **gen_ml_mode.py** (Some designed network structures.)
