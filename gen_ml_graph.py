@@ -315,6 +315,7 @@ class MLGraph():
 
 def end():
     pass
+
 #%%
 if __name__ == "__main__":
 
@@ -327,5 +328,14 @@ if __name__ == "__main__":
     mlg.add_1_to_n(name='c1_3', lname='c1_2', n=5, period=7)
     g = mlg.get_graph()
 
-    from plot import plot_graph_from_nx
+    # plt显示
+    from plt_plot import plot_graph_from_nx
     plot_graph_from_nx(g)
+
+    # neo4j导入
+    from neo4j_plot.autoloader import nx_to_neo4j
+    nx_to_neo4j(g)
+
+
+
+

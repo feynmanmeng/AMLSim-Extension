@@ -3,8 +3,8 @@ import os
 import networkx as nx
 import pandas
 
-from gen_ml_graph.tools import nx_to_nodes_edges, nodes_edges_to_nx, nx_to_csv
-from gen_ml_graph.ml_model_generator import MLMode
+from tools import nx_to_nodes_edges, nodes_edges_to_nx, nx_to_csv
+from gen_ml_mode import MLMode
 
 def merge_gs(gs):
     lst_n = []
@@ -68,22 +68,18 @@ class MLS():
 def end():
     pass
 
+#%%
 if __name__ == '__main__':
     mls = MLS()
     g = mls.combination_4()
 
-    _n, _e = nx_to_nodes_edges(g)
+    # plt显示
+    from plt_plot import plot_graph_from_nx
+    plot_graph_from_nx(g)
 
-    # 保存到文件，待合并
-    nx_to_csv(g)
-
-    # 单独导出洗钱结构，在 neo4j中观察
-    # nodes, edges = nx_to_nodes_edges(g)
-    # edges = edges.reset_index()
-    # edges.rename(columns={'index': 'id'}, inplace=True)
-    # path = r'./data/tmp'
-    # nodes.to_csv(os.path.join(path, 'nodes.csv'), index=False)
-    # edges.to_csv(os.path.join(path, 'edges.csv'), index=False)
+    # neo4j导入
+    from neo4j_plot.autoloader import nx_to_neo4j
+    nx_to_neo4j(g)
 
 
 

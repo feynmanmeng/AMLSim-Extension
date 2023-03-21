@@ -367,6 +367,7 @@ def nx_to_nodes_edges(g:nx.MultiDiGraph):
 
 def end():
     pass
+
 #%%
 if __name__ == '__main__':
 
@@ -375,17 +376,11 @@ if __name__ == '__main__':
     g = mlm.m6(id_start=0, id_end=120, start_step=1, margin_ratio=0.99, alertid=1)
     # g = mlm.get_graph('m5')
 
-    from plot import plot_graph_from_nx
+    # plt显示
+    from plt_plot import plot_graph_from_nx
     plot_graph_from_nx(g)
 
-    #%%
-    # neo4j可视化
-    nodes, edges = nx_to_nodes_edges(g)
-    # 调整格式
-    edges = edges.reset_index()
-    edges.rename(columns={'index': 'id'}, inplace=True)
-    #
-    # 导出
-    path = r'./data/tmp'
-    nodes.to_csv(os.path.join(path, 'nodes.csv'), index=False)
-    edges.to_csv(os.path.join(path, 'edges.csv'), index=False)
+    # neo4j导入
+    from neo4j_plot.autoloader import nx_to_neo4j
+    nx_to_neo4j(g)
+
