@@ -28,6 +28,7 @@ class Py2Neo4j(threading.Thread):
         self.username = self.neo4j_args["username"]
         self.password = self.neo4j_args["password"]
         self.database = self.neo4j_args["database"]
+        self.port = self.neo4j_args["port"]
 
     def match_node(self, graph, label, attrs):
         '''
@@ -53,7 +54,7 @@ class Py2Neo4j(threading.Thread):
 
     def process(self, thread_name, q: queue.Queue):
         # 连接数据库
-        graph = Graph("neo4j://localhost:7687/", auth=(self.username, self.password), name=self.database)
+        graph = Graph(f"neo4j://localhost:{self.port}/", auth=(self.username, self.password), name=self.database)
 
         while not exitFlag:
             thread_lock.acquire()

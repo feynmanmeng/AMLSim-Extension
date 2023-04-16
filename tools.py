@@ -5,16 +5,21 @@ import networkx as nx
 
 def split_float(amount, n_sep, variation = 0.35):
     '''
+    函数功能：将一个金额拆分为n个近似均等的数值列表
+    参数：一个浮点型金额，一个整型参数n_sep表示拆分成n个数值，一个浮点型参数variation表示生成数值的波动大小(默认为0.35)
+    返回值：该金额被拆分后的结果，返回一个列表
+    split_float(54782, 4)
     54782, 4 -> [11001, 6085, 9494, 28202]
+    split_float(1578.1, 2)
     '''
     amount_left = amount
     avg_amount = amount / n_sep
-    delta = float(avg_amount * variation)
+    delta = float(avg_amount * variation) # 计算平均值的波动范围
     out = list()
     for i in range(0, n_sep - 1):
-        per = avg_amount + random.uniform(-1 * delta, delta)
+        per = avg_amount + random.uniform(-1 * delta, delta) # 生成一个波动范围内的随机数，表示当前分配的金额
         out.append(per)
-        amount_left -= per
+        amount_left -= per # 将已分配的金额从总金额中减去，得到剩余未分配金额
     out.append(amount_left)
     return out
 

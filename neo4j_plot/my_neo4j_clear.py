@@ -12,10 +12,11 @@ class NeoClear():
         self.username = self.neo4j_args["username"]
         self.password = self.neo4j_args["password"]
         self.database = self.neo4j_args["database"]
+        self.port = self.neo4j_args["port"]
 
     def process(self,):
-        # 连接数据库
-        graph = Graph("neo4j://localhost:7687/", auth=(self.username, self.password), name=self.database)
+        # 连接数据库 【port 默认 7687】
+        graph = Graph(f"neo4j://localhost:{self.port}/", auth=(self.username, self.password), name=self.database)
         # 清除neo4j里面的所有数据
         graph.delete_all()
         print("【已清空】")

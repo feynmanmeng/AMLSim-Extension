@@ -6,336 +6,287 @@ import pandas
 
 from tools import split_float, split_int, merge_graph, nx_to_csv
 
+
 class MLGraph():
     '''
     os.getcwd()
     '''
 
-    def __init__(self, id_start = 0, id_end = 250, margin_ratio = 0.99, alertid = 1):
-        # 默认是10k
-        self.g = nx.MultiDiGraph()  # 交易图
-        self.pre_ids = [x for x in range(id_start, id_end)] # 预生成的随机节点 id
-        self.n_account = 0  # 账户总数
-        self.components = dict() # name : [sub_g, name, cotype, accounts, amounts, steps]
-        self.margin_ratio = margin_ratio
+    def __init__(self, id_start=1, id_end=250, margin_ratio=0.99, alertid=1):
+        self.G = nx.MultiDiGraph()  # 交易图
+        self.id_start = id_start  # 账户id范围起点
+        self.id_end = id_end  # 账户id范围终点
+        self.account_ids = [x for x in range(self.id_start, self.id_end)]  # 分配给新节点的id从这里取
+        self.components = dict()  # name : [sub_g, name, cotype, accounts, amounts, steps]
+        self.turnover = margin_ratio
         self.alertid = alertid
-    
-    def shuffle_ids(self):
-        random.shuffle(self.pre_ids)
+        self.n_edges = 0
 
-    def get_n_account(self):
-        return self.n_account
+    def shuffle_ids(self):
+        random.shuffle(self.account_ids)
 
     def get_graph(self):
-        return self.g
+        return self.G
 
-    def get_components(self, tname = None):
-        if tname == None:
+    def get_components(self, component_name=None):
+        if component_name == None:
             return self.components
         else:
-            return self.components[tname]
+            return self.components[component_name]
 
-    def _add_n(self, n = 30, min_amount = 200, max_amount = 400, start = 0, period = 1):
-        ''''
-        添加 n 个节点，并给每个节点赋予传递金额
+    def add_n(self, coname, n=5, min_amount=200, max_amount=400, start=1, period=0, target_ids=[], cotype='add_n'):
         '''
-        # accounts = [self.n_account + x for x in range(1, n + 1)]
-        accounts = self.pre_ids[:n]; self.pre_ids = self.pre_ids[n:]
-        amounts = [random.uniform(min_amount, max_amount) for x in accounts]
+        向图中添加孤立的n个账户
+        '''
+        # 分配账户id
+        if len(target_ids) == 0:
+            accounts = self.account_ids[:n]
+            self.account_ids = self.account_ids[n:]
+        else:
+            for node in target_ids:
+                if node in self.G.nodes():
+                    print(f'节点{node}已存在。')
+                    exit(0)
+                else:
+                    self.account_ids.remove(node)
+            accounts = target_ids
+
+        # 分配账户金额
+        amounts = [round(random.uniform(min_amount, max_amount), 1) for x in accounts]
+        # 分配该账户的时间，后续连接需要不能小于这个数
         steps = [start + random.randint(0, period) for x in accounts]
-        self.g.add_nodes_from(accounts, issar = True)
-        self.n_account += n
-        return accounts, amounts, steps
-
-    def new_n(self, name, n, start_step, min_amount, max_amount):
-        '''
-        新增功能，new_n + add_n_to_1 = new_n_to_1
-        '''
-        cotype = 'new_n'
-        accounts = self.pre_ids[:n]; self.pre_ids = self.pre_ids[n:]
-        amounts = [random.uniform(min_amount, max_amount) / self.margin_ratio for x in accounts] # n_to_1会乘，所以提前还原
-        steps = [start_step for x in accounts] # 只做标识初始点，不增加
         # 创建图
         sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar = True)
+        new_nodes = [(id, {'amounts': a, 'steps': s, 'cotype': cotype, 'coname': coname, 'issar': True}) for id, a, s in
+                     zip(accounts, amounts, steps)]
+        sub_g.add_nodes_from(new_nodes)
         # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += n
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+        self.G = merge_graph(self.G, sub_g)
+        # 记录
+        self.components[coname] = {'sub_g': sub_g,
+                                   'accounts': accounts, 'amounts': amounts, 'steps': steps,
+                                   'cotype': cotype, 'coname': coname, 'issar': True, 'alert_id': self.alertid}
 
-    def new_n_to_1(self, name, new_n = 30, start_step = 0, new_period = 1, min_amount = 200, max_amount = 400, period = 7):
-        cotype = 'n_to_1'
-        l_accounts, l_amounts, l_steps = self._add_n(new_n, min_amount, max_amount, start_step, new_period)
-        # accounts =  [self.n_account + 1]
-        accounts = self.pre_ids[:1]; self.pre_ids = self.pre_ids[1:]
-        amounts_mid = l_amounts
-        amounts = [sum(amounts_mid) * self.margin_ratio]
-        steps_mid = [x + random.randint(0, period) for x in l_steps]
-        steps = [max(steps_mid) + 1]
-        # 创建图
-        sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar=True)
-        for l_account, amount, step in zip(l_accounts, amounts_mid, steps_mid):
-            sub_g.add_edge(l_account, accounts[0], name=name, amount=amount, step=step, cotype=cotype, alertid=self.alertid, issar=True)
-        # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += 1
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+    def add_n_to_1(self, coname, lname, period=0, target_id=-1, cotype='n_to_1'):
+        '''
+        将 n 输出资金分散到 1 个节点上
+        '''
+        if target_id == -1:
+            self.add_n_to_n(coname=coname, lname=lname, n=1, period=period, target_ids=[], cotype=cotype)
+        else:
+            self.add_n_to_n(coname=coname, lname=lname, n=1, period=period, target_ids=[target_id], cotype=cotype)
 
-    def add_1_to_1(self, name, lname, period = 1): # 增加指定连接功能
+    def add_1_to_1(self, coname, lname, period=0, target_id=-1, cotype='1_to_1'):  # 增加指定连接功能
         ''''
         将 1 个输出，连接到 1 节点
         '''
-        cotype = '1_to_1'
-        _, l_accounts, l_amounts, l_steps, _ = self.components[lname].values()
-        # accounts = [self.n_account + 1]
-        accounts = self.pre_ids[:1]; self.pre_ids = self.pre_ids[1:]
-        amounts_mid = l_amounts
-        amounts = [x * self.margin_ratio for x in amounts_mid]
-        steps_mid = l_steps
-        steps = [x + period for x in l_steps]
-        # 创建图
-        sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar = True)
-        sub_g.add_edge(l_accounts[0], accounts[0], name=name, amount=amounts[0], step=steps[0], cotype=cotype, alertid=self.alertid, issar=True)
-        # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += 1
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
-
-    def add_n_to_1(self, name, lname, period = 7, ret = False, nodeid = None):
-        ''''
-        将 n 输出资金分散到 1 个节点上
-        ret = True 时，返回 1这个节点的 id
-        nodeid = int 时，这个新节点将会用这个 id
-        '''
-
-        cotype = 'n_to_1'
-        _, l_accounts, l_amounts, l_steps, _ = self.components[lname].values()
-        # 选择继续使用后续节点，还是使用指定节点
-        if nodeid == None:
-            accounts = self.pre_ids[:1]; self.pre_ids = self.pre_ids[1:]
+        if target_id == -1:
+            self.add_n_to_n(coname=coname, lname=lname, n=1, period=period, target_ids=[], cotype=cotype)
         else:
-            accounts = [nodeid]
-        amounts_mid = l_amounts
-        amounts = [sum(amounts_mid) * self.margin_ratio]
-        steps_mid = [x + random.randint(0, period) for x in l_steps]
-        steps = [max(steps_mid) + 1]
-        # 创建图
-        sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar=True)
-        for l_account, amount, step in zip(l_accounts, amounts_mid, steps_mid):
-            sub_g.add_edge(l_account, accounts[0], name=name, amount=amount, step=step, cotype=cotype, alertid=self.alertid, issar=True)
-        # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += 1
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+            self.add_n_to_n(coname=coname, lname=lname, n=1, period=period, target_ids=[target_id], cotype=cotype)
 
-        if ret == True:
-            return accounts[0] # 返回当前使用的 id
-
-    def add_1_to_n(self, name, lname, n = 15, period = 7):
+    def add_1_to_n(self, coname, lname, n=5, period=0, target_ids=[], cotype='1_to_n'):
         ''''
         将 n 个节点的资金，汇总到 1 个节点，再分散发出
         '''
-        cotype = '1_to_n'
-        _, l_accounts, l_amounts, l_steps, _ = self.components[lname].values()
-        # accounts = [self.n_account + x for x in range(1, n + 1)]
-        accounts = self.pre_ids[:n]; self.pre_ids = self.pre_ids[n:]
-        amounts_mid = [x for x in split_float(sum(l_amounts), n)]
-        amounts = [x * self.margin_ratio for x in amounts_mid]
-        steps_mid = [l_steps[0] + random.randint(0, period) for x in accounts]
-        steps = [x + 1 for x in steps_mid]
-        # 创建图
-        sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar = True)
-        for account, amount, step in zip(accounts, amounts_mid, steps_mid):
-            sub_g.add_edge(l_accounts[0], account, name=name, amount=amount, step=step, cotype=cotype, alertid=self.alertid, issar=True)
-        # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += n
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+        self.add_n_to_n(coname=coname, lname=lname, n=n, period=period, target_ids=target_ids, cotype=cotype)
 
-    def add_n_to_n(self, name, lname, n = 5, period = 3):
-        ''''
+    def add_n_to_n(self, coname, lname, n=5, period=0, target_ids=[], cotype='n_to_n'):
+        '''
         将 n 个节点的资金，各自随机分散到，另外相同的 n 个节点上
         '''
-        cotype = 'n_to_n'
-        _, l_accounts, l_amounts, l_steps, _ = self.components[lname].values()
-        # accounts = [self.n_account + x for x in range(1, n + 1)]
-        accounts = self.pre_ids[:n]; self.pre_ids = self.pre_ids[n:]
-        # 分配资金
-        amounts_mid = []
-        for l_amount in l_amounts:
-            amounts_mid.extend([x for x in split_float(l_amount, len(accounts))])
-        # 分配时间
-        steps_mid = []
-        for l_step in l_steps:
-            steps_mid.extend([l_step + random.randint(0, period) for x in accounts])
-        # 创建图
-        sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar=True)
-        for l_account in l_accounts:
-            for account in accounts:
-                sub_g.add_edge(l_account, account, name=name, amount=amounts_mid.pop(0), step=steps_mid.pop(0), cotype=cotype, alertid=self.alertid, issar=True)
-        # 统计资金、时间
-        amounts = []
-        steps = []
-        for account in accounts:
-            amounts.append(sum([c['amount'] for u, v, c in sub_g.edges.data() if v == account]) * self.margin_ratio)
-            steps.append(max([c['step'] for u, v, c in sub_g.edges.data() if v == account]) + 1)
-        # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += n
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+        self.add_n_to_n_prob(coname=coname, lname=lname, n=n, period=period, prob=1, target_ids=target_ids,
+                             cotype=cotype)
 
-    def add_n_to_n_prob(self, name, lname, n = 2, period = 7, prob = 0.5):
+    def add_n_to_n_prob(self, coname, lname, n=5, period=0, prob=0.5, target_ids=[], cotype='n_to_n_prob'):
         ''''
         n 个节点与另 n 个节点，以概率 p 连接， 保证节点至少有一条输入
         '''
-        cotype = 'n_to_n_prob'
-        _, l_accounts, l_amounts, l_steps, _ = self.components[lname].values()
-        # accounts = [self.n_account + x for x in range(1, n + 1)]
-        accounts = self.pre_ids[:n]; self.pre_ids = self.pre_ids[n:]
+        _, l_accounts, l_amounts, l_steps, _, _, _, _ = self.components[lname].values()
+        # 指定后续 n 个节点的 id，指定的 target_ids 数量不能超过 n
+        delta = n - len(target_ids)
+        if delta > 0:
+            # 需要补充 target_ids
+            target_ids.extend(self.account_ids[:delta])
+        # 计算后续节点，已有的资金和时间
+        accounts = target_ids
+        exist_amounts = list()
+        exist_steps = list()
+        for target_id in target_ids:
+            if target_id in self.G.nodes():
+                # 说明 target_id 之前被使用过
+                exist_amounts.append(nx.get_node_attributes(self.G, 'amounts')[target_id])
+                exist_steps.append(nx.get_node_attributes(self.G, 'steps')[target_id])
+            else:
+                # 第一次使用，后续不可以再用它分配新节点
+                self.account_ids.remove(target_id)
+                exist_amounts.append(0)
+                exist_steps.append(0)
+
         # 生成掩膜
-        masks = [] # 二维
-        for l_amount in l_amounts:
-            rands = [random.uniform(0,1) for x in accounts] # 随机数
-            mask = [1 if rand > prob else 0 for rand in rands] # 掩膜
-            if int(sum(mask)) == 0: # 保证至少有一个传递资金
-                mask[random.randint(0,len(accounts)-1)] = 1
-            masks.append(mask) # 临时保存
-        for i in range(0, len(masks[0])): # 保证所有输出节点都有输入
-            check = [x[i] for x in masks] # 取每一列
-            if int(sum(check)) == 0: # 如果某一列为空
-                insert_loc = random.randint(0,len(masks)-1) # 随机分配
+        masks = []  # 二维
+        for _ in l_amounts:
+            rands = [random.uniform(0, 1) for _ in accounts]  # 随机数
+            mask = [1 if rand <= prob else 0 for rand in rands]  # 掩膜
+            if int(sum(mask)) == 0:  # 保证至少有一个传递资金
+                mask[random.randint(0, len(accounts) - 1)] = 1
+            masks.append(mask)  # 临时保存
+
+        for i in range(0, len(accounts)):  # 保证所有输出节点都有输入
+            check_col = [x[i] for x in masks]  # 取每一列
+            if int(sum(check_col)) == 0:  # 如果某一列为空
+                insert_loc = random.randint(0, len(masks) - 1)  # 随机分配
                 masks[insert_loc][i] = 1
         # masks = [item for sublist in masks for item in sublist] # 展平（两层循环，逐层打开）
         # print(masks)
-        # 分配金额
-        msks = masks.copy()
+
+        # 资金
         amounts_mid = []
-        for l_amount, msk in zip(l_amounts, msks):
-            n_activated = int(sum(msk))
-            amount_activated = split_float(l_amount, n_activated)
-            amounts_mid.extend(amount_activated)
-        # 分配时间
+        amounts = exist_amounts
+        for l_amount, mask in zip(l_amounts, masks):
+            n_active = int(sum(mask))  # 激活的节点数量
+            _1_to_n = [round(x * self.turnover, 1) for x in split_float(l_amount, n_active)]  # 连边上的金额（拆分之前的资金）
+            per_amounts_mid = list()
+            for _mask in mask:
+                if _mask == 1:
+                    per_amounts_mid.append(_1_to_n.pop(0))
+                else:
+                    per_amounts_mid.append(0)  # 无效边资金为0表示不需要连接
+            amounts_mid.append(per_amounts_mid)
+            amounts = [round(a + b, 1) for a, b in zip(amounts, per_amounts_mid)]
+
+        # 时间
         steps_mid = []
-        msks = [item for sublist in masks for item in sublist]
-        for l_step in l_steps:
-            for account in accounts:
-                m = msks.pop(0)
-                if m == 1:
-                    steps_mid.append(l_step + random.randint(0,period))
+        steps = exist_steps
+        for l_step, mask in zip(l_steps, masks):
+            n_active = int(sum(mask))  # 激活的节点数量
+            _1_to_n = [s + random.randint(0, period) for s in [l_step] * n_active]  # 连边上的时间，由 n_active 决定
+            per_steps_mid = list()
+            for _mask in mask:
+                if _mask == 1:
+                    per_steps_mid.append(_1_to_n.pop(0))
+                else:
+                    per_steps_mid.append(0)  # 无效边时间设为0不要紧
+            steps_mid.append(per_steps_mid)
+            steps = [max(a, b) for a, b in zip(steps, per_steps_mid)]
+
         # 创建图
-        msks = [item for sublist in masks for item in sublist]
         sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar=True)
-        for l_account in l_accounts:
-            for account in accounts:
-                m = msks.pop(0)
-                if m == 1:
-                    sub_g.add_edge(l_account, account, name=name, amount=amounts_mid.pop(0), step=steps_mid.pop(0), cotype=cotype, alertid=self.alertid, issar=True)
-        # 统计资金、时间
-        amounts = []
-        steps = []
-        for account in accounts:
-            amounts.append(sum([c['amount'] for u, v, c in sub_g.edges.data() if v == account]) * self.margin_ratio)
-            steps.append(max([c['step'] for u, v, c in sub_g.edges.data() if v == account]) + 1)
+        new_nodes = [(id, {'amounts': a, 'steps': s, 'cotype': cotype, 'coname': coname, 'issar': True}) for
+                     id, a, s in
+                     zip(accounts, amounts, steps)]
+        sub_g.add_nodes_from(new_nodes)
+        for l_account, amounts_m, steps_m in zip(l_accounts, amounts_mid, steps_mid):
+            for account, amount, step in zip(accounts, amounts_m, steps_m):
+                # 是否掩膜跳过
+                if amount != 0:
+                    # 添加交易
+                    sub_g.add_edge(l_account, account,
+                                   id=self.n_edges, amount=amount, step=step,
+                                   coname=coname, cotype=cotype, alertid=self.alertid, issar=True)
+                    self.n_edges += 1
+                    # 减去发出金额账户拥有的资金
+                    self.G.nodes[l_account]['amounts'] = round((self.G.nodes[l_account]['amounts'] - amount), 1)
         # 合并
-        self.g = merge_graph(self.g, sub_g)
-        self.n_account += n
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+        self.G = merge_graph(self.G, sub_g)
+        # 记录
+        self.components[coname] = {'sub_g': sub_g,
+                                   'accounts': accounts, 'amounts': amounts, 'steps': steps,
+                                   'cotype': cotype, 'coname': coname, 'issar': True, 'alert_id': self.alertid}
 
-    def _add_k_core(self):
-        pass
-
-    def _add_multi_mixed_layers(self):
-        pass
-
-    def _add_1_n_1(self):
-        '''
-        单输入，加入 n 条出口， 继续输出
-        '''
-        pass
-
-    def _close_cycle(self, name, lname, sname, ratio):
-        '''
-        将最后一个环节的发散金额，抽取部分，汇入起点出的叶子节点，形成闭环
-        '''
-        pass
-
-    def _connect_1_1(self):
-        pass
-
-    def _insert_1_1_1(self):
-        pass
-
-    def _update(self):
-        pass
-
-    def merge_components(self, name, lnames = []):
+    def merge_components(self, coname, lnames: list):
         ''''
         将多个节点聚合成一个标识
         不引入新节点，当作修改引用
         '''
-        cotype = 'merge_components'
+        cotype = 'merge'
         # 包含所有节点信息
         accounts = list()
         amounts = list()
         steps = list()
         for lname in lnames:
-            _, _accounts, _amounts, _steps, _ = self.components[lname].values()
-            accounts.extend(_accounts)
-            amounts.extend([x * self.margin_ratio for x in _amounts])
-            steps.extend(_steps)
+            _, l_accounts, l_amounts, l_steps, _, _, _, _ = self.components[lname].values()
+            accounts.extend(l_accounts)
+            amounts.extend(l_amounts)
+            steps.extend(l_steps)
         # 创建图
         sub_g = nx.MultiDiGraph()
-        sub_g.add_nodes_from(accounts, issar=True)
-        # 保存
-        self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+        new_nodes = [(id, {'amounts': a, 'steps': s, 'cotype': cotype, 'coname': coname, 'issar': True}) for
+                     id, a, s in
+                     zip(accounts, amounts, steps)]
+        sub_g.add_nodes_from(new_nodes)
+        # 合并（更新信息）
+        self.G = merge_graph(self.G, sub_g)
+        # 记录
+        self.components[coname] = {'sub_g': sub_g,
+                                   'accounts': accounts, 'amounts': amounts, 'steps': steps,
+                                   'cotype': cotype, 'coname': coname, 'issar': True, 'alert_id': self.alertid}
 
-    def split_components(self, lname, n_accounts = [1,1,2], names = ['a','b','c']):
+    def split_components(self, lname, n_accounts: list, conames: list):
         ''''
         将多个节点分割成多组标识
+            n_accounts = [1, 1, 2]
+                每一个组包含多少个账户
+            conames = ['a', 'b', 'c']
+                每一个组的coname叫什么
         '''
-        cotype = 'split_components'
-        _, _accounts, _amounts, _steps, _ = self.components[lname].values()
-        if sum(n_accounts) != len(_accounts):
-            print('数量不匹配'); return -1
-        for n, name in zip(n_accounts, names):
-            accounts = _accounts[:n]; _accounts = _accounts[n:]
-            amounts = _amounts[:n]; _amounts = _amounts[n:]
-            steps = _steps[:n]; _steps = _steps[n:]
+        cotype = 'split'
+        _, l_accounts, l_amounts, l_steps, _, _, _, _ = self.components[lname].values()
+        for n, coname in zip(n_accounts, conames):
+            # 账户
+            accounts = l_accounts[:n]
+            l_accounts = l_accounts[n:]
+            # 金额
+            amounts = l_amounts[:n]
+            l_amounts = l_amounts[n:]
+            # 时间
+            steps = l_steps[:n]
+            l_steps = l_steps[n:]
             # 创建图
             sub_g = nx.MultiDiGraph()
-            sub_g.add_nodes_from(accounts, issar=True)
-            # 保存
-            self.components[name] = {'sub_g': sub_g, 'accounts': accounts, 'amounts': amounts, 'steps': steps, 'cotype': cotype}
+            new_nodes = [(id, {'amounts': a, 'steps': s, 'cotype': cotype, 'coname': coname, 'issar': True}) for
+                         id, a, s in
+                         zip(accounts, amounts, steps)]
+            sub_g.add_nodes_from(new_nodes)
+            # 合并（更新信息）
+            self.G = merge_graph(self.G, sub_g)
+            # 记录
+            self.components[coname] = {'sub_g': sub_g,
+                                       'accounts': accounts, 'amounts': amounts, 'steps': steps,
+                                       'cotype': cotype, 'coname': coname, 'issar': True, 'alert_id': self.alertid}
+
 
 def end():
     pass
 
-#%%
-if __name__ == "__main__":
 
+# %%
+if __name__ == "__main__":
     # 【demo】
     # 单收集 - 单节点 - 单分散
-    mlg = MLGraph()
-    mlg.shuffle_ids()
-    mlg.new_n_to_1(name='c1_1', new_n=30, start_step=0, new_period=1, min_amount=200, max_amount=400, period=7)
-    mlg.add_1_to_1(name='c1_2', lname='c1_1', period=1)
-    mlg.add_1_to_n(name='c1_3', lname='c1_2', n=5, period=7)
-    g = mlg.get_graph()
+    mlg = MLGraph(id_start=0, id_end=250, margin_ratio=0.999, alertid=1)
+    mlg.add_n(coname='c1', n=3, min_amount=1000, max_amount=1000, start=1, period=0, target_ids=[])
+    mlg.add_n_to_n(coname='c2', lname='c1', n=3, period=1, target_ids=[])
+    mlg.add_n_to_n_prob(coname='c3', lname='c2', n=5, period=1, prob=0.5, target_ids=[])
+    mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=-1)
+
+    G = mlg.get_graph()
+
+    # mlg.add_n(coname='', n=, min_amount=1000, max_amount=1000, start=1, period=0, target_ids=[])
+    # mlg.add_1_to_1(coname='', lname='', period=1, target_id=-1)
+    # mlg.add_n_to_1(coname='', lname='', period=1, target_id=-1)
+    # mlg.add_1_to_n(coname='', lname='', n=, period=1, target_ids=[])
+    # mlg.add_n_to_n(coname='', lname='', n=, period=1, target_ids=[])
+    # mlg.add_n_to_n_prob(coname='', lname='', n=, period=1, prob=0.5, target_ids=[])
+    # mlg.split_components(lname='', n_accounts=[], conames=[])
+    # mlg.merge_components(coname='', lnames=[])
 
     # plt显示
     from plt_plot import plot_graph_from_nx
-    plot_graph_from_nx(g)
+
+    plot_graph_from_nx(G)
 
     # neo4j导入
     from neo4j_plot.autoloader import nx_to_neo4j
-    nx_to_neo4j(g)
 
-
-
-
+    nx_to_neo4j(G)

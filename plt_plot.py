@@ -81,11 +81,11 @@ def plot_graph_from_nx(g):
     # plt.rcParams['font.serif'] = ['Times New Roman']  # 用来正常显示中文标签
     nx.draw(g, pos=pos,
             # cmap=plt.get_cmap('jet'),
-            node_size=150,
-            font_size=6,
+            node_size=250,
+            font_size=12,
             with_labels=True,
             font_weight='bold',
-            font_color='red')
+            font_color='white') # red
     plt.show()
 
 
