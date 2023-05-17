@@ -8,6 +8,6 @@ out
 gen
 
 # data directory
-/data
-/algo
-/old
+/data/
+/algo/
+/old/

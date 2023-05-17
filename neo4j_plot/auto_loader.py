@@ -1,40 +1,46 @@
 import networkx as nx
 import pandas
 
-from neo4j_plot.Neo4jClear import autorun_clear
-from neo4j_plot.Neo4jNodes import autorun_add_nodes
-from neo4j_plot.Neo4jEdges import autorun_add_edges
+from neo4j_plot.neo4j_clear import autorun_clear
+from neo4j_plot.neo4j_nodes import autorun_add_nodes
+from neo4j_plot.neo4j_edges import autorun_add_edges
 
-def nx_to_neo4j(G):
+def nx_to_neo4j(G: nx.MultiDiGraph):
     '''
-    格式要求：
+    说明：
+        将 G:nx.MultiDiGraph在 Neo4j数据库中可视化
+        将需要导入的全量数据拆分为多份，由不同线程去执行
+
+    要求：
         节点：第一列名字叫 id，其他属性
         边：第一列 src，第二列 dst，第三列建议是 id，其他属性
 
-    Neo4j
-        graph = Graph("neo4j://localhost:7687/", auth=("neo4j", "feynmanneo4j"), name=self.database)
+    连接：
+        Neo4j <- py2neo
+            graph = Graph("neo4j://localhost:7687/", auth=("neo4j", "feynmanneo4j"), name="neo4j")
 
-    Gephi - neo4j-import
-        neo4j://localhost:7687/
-        neo4j
-        neo4j
-        feynmanneo4j
+        Gephi <- neo4j-import
+            neo4j://localhost:7687/
+            neo4j
+            neo4j
+            feynmanneo4j
 
     '''
-    # 转化为 nodes edges
+    # 转化为 nodes edges 的 pandas.DataFrame
     nodes, edges = nx_to_nodes_edges(G)
-    # 清空数据库
+
+    # 1. 清空数据库
     autorun_clear()
-    # 加载节点
+    # 2. 加载节点
     autorun_add_nodes(data=nodes, n_label='ACCOUNT', r_label='TRANS', n_thread=200, batch_size=50)
-    # 加载边
+    # 3. 加载边
     autorun_add_edges(data=edges, n_label='ACCOUNT', r_label='TRANS', n_thread=200, batch_size=50)
 
     print(f"节点数量：{G.number_of_nodes()}")
     print(f"边数量：{G.number_of_edges()}")
     print(f"总数量：{G.number_of_nodes() + G.number_of_edges()}")
 
-def nx_to_nodes_edges(g:nx.MultiDiGraph):
+def nx_to_nodes_edges(G:nx.MultiDiGraph):
     ''''
     将 networkx 图保存为 节点和边文件
 
@@ -45,7 +51,7 @@ def nx_to_nodes_edges(g:nx.MultiDiGraph):
     nodes = []
     edges = []
 
-    for u, c in g.nodes.data():
+    for u, c in G.nodes.data():
         per = list()
         per.extend([u])
         per.extend(list(c.values()))
@@ -55,7 +61,7 @@ def nx_to_nodes_edges(g:nx.MultiDiGraph):
     columns.extend(list(c.keys()))
     nodes = pandas.DataFrame(nodes, columns=columns)
 
-    for u, v, c in g.edges.data():
+    for u, v, c in G.edges.data():
         per = list()
         per.extend([u, v])
         per.extend(list(c.values()))

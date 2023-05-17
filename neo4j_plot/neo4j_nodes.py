@@ -21,8 +21,13 @@ class Py2Neo4j(threading.Thread):
         self.n_label = n_label
         self.r_label = r_label
 
-        # 连接neo4j
-        self.neo4j_config = r'neo4j_plot/neo4j.json'
+        # 1. 获取当前文件所在目录的绝对路径
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+
+        # 2. 将neo4j.json文件路径和当前文件所在目录拼接
+        self.neo4j_config = os.path.join(dir_path, 'db_connection.json')
+
+        # 3. 读取数据库配置
         with open(self.neo4j_config, 'r', encoding='utf-8') as f:
             self.neo4j_args = json.load(f)
         self.username = self.neo4j_args["username"]
@@ -30,59 +35,26 @@ class Py2Neo4j(threading.Thread):
         self.database = self.neo4j_args["database"]
         self.port = self.neo4j_args["port"]
 
-    def match_node(self, graph, label, attrs):
-        '''
-        在连接边之前首先检查两端的节点是否存在
-        '''
-        matcher = NodeMatcher(graph)
-        return matcher.match(label).where(id=attrs["id"]).first()
-
-    def write(self, graph, n_label, r_label, sub_r_attrs):
-        for r_attrs in sub_r_attrs:
-            # 使用 Relationship创建，存在无法创建多重边的问题
-            # n_attrs1 = {'id': r_attrs['src']}
-            # n_attrs2 = {'id': r_attrs['dst']}
-            #
-            # del r_attrs['src']
-            # del r_attrs['dst']
-            #
-            # # 使用 graph.create创建
-            # n1 = self.match_node(graph, n_label, n_attrs1)
-            # n2 = self.match_node(graph, n_label, n_attrs2)
-            # if n1 is None or n2 is None:
-            #     return False
-            # r = Relationship(n1, r_label, n2, **r_attrs)
-            # graph.create(r)
-
-            # 使用 cypher语句创建，可以创建多重边
-            src_id = r_attrs['src']
-            dst_id = r_attrs['dst']
-            del r_attrs['src']
-            del r_attrs['dst']
-
-            _sig = "'"
-            string_attr_dict = "{" + ", ".join(
-                [f"{key}:{value if isinstance(value, (int, float, bool)) else _sig + value + _sig}" for key, value in
-                 r_attrs.items()]) + "}"
-
-            cyhper = f"MATCH (src:{n_label}),(dst:{n_label}) " \
-                     f"WHERE src.id = {src_id} AND dst.id = {dst_id} " \
-                     f"CREATE (src)-[r:{r_label} {string_attr_dict}]->(dst)"
-
-            graph.run(cyhper)
+    def write(self, graph, n_label, sub_n_attrs):
+        for n_attrs in sub_n_attrs:
+            node = Node(n_label, **n_attrs)
+            graph.create(node)
 
     def process(self, thread_name, q: queue.Queue):
+        global exitFlag
+        # database = 'neo4j'
+        # n_label = "ACCOUNT"
         # 连接数据库
         graph = Graph(f"neo4j://localhost:{self.port}/", auth=(self.username, self.password), name=self.database)
 
         while not exitFlag:
             thread_lock.acquire()
             if not queue_work.empty():
-                sub_r_attrs = q.get()
+                sub_n_attrs = q.get()
                 thread_lock.release()
                 print("thread: {} is processing... {} left".format(thread_name, queue_work.qsize()))
-                # 执行那个数据录入
-                self.write(graph, self.n_label, self.r_label, sub_r_attrs)
+                # 执行小批数据录入
+                self.write(graph, self.n_label, sub_n_attrs)
             else:
                 thread_lock.release()
 
@@ -116,7 +88,7 @@ def sep_data(data, queue_work: queue.Queue, batch_size=50, src=0):
     return queue_work
 
 
-def autorun_add_edges(data, n_label='ACCOUNT', r_label='TRANS', n_thread=16, batch_size=50):
+def autorun_add_nodes(data, n_label='ACCOUNT', r_label='TRANS', n_thread=16, batch_size=50):
     global exitFlag
     global thread_lock
     global queue_work
@@ -158,7 +130,7 @@ def autorun_add_edges(data, n_label='ACCOUNT', r_label='TRANS', n_thread=16, bat
     print("退出主线程")
 
     t2 = time.time()
-    print("【边导入】耗时：{0} s".format((t2 - t1) * 1))
+    print("【节点导入】耗时：{0} s".format((t2 - t1) * 1))
 
 
 # %%
