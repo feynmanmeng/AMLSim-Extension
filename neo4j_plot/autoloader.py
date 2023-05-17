@@ -1,11 +1,11 @@
 import networkx as nx
 import pandas
 
-from neo4j_plot.my_neo4j_clear import autorun_clear
-from neo4j_plot.my_neo4j_nodes import autorun_add_nodes
-from neo4j_plot.my_neo4j_edges import autorun_add_edges
+from neo4j_plot.Neo4jClear import autorun_clear
+from neo4j_plot.Neo4jNodes import autorun_add_nodes
+from neo4j_plot.Neo4jEdges import autorun_add_edges
 
-def nx_to_neo4j(g):
+def nx_to_neo4j(G):
     '''
     格式要求：
         节点：第一列名字叫 id，其他属性
@@ -22,13 +22,17 @@ def nx_to_neo4j(g):
 
     '''
     # 转化为 nodes edges
-    nodes, edges = nx_to_nodes_edges(g)
+    nodes, edges = nx_to_nodes_edges(G)
     # 清空数据库
     autorun_clear()
     # 加载节点
     autorun_add_nodes(data=nodes, n_label='ACCOUNT', r_label='TRANS', n_thread=200, batch_size=50)
     # 加载边
     autorun_add_edges(data=edges, n_label='ACCOUNT', r_label='TRANS', n_thread=200, batch_size=50)
+
+    print(f"节点数量：{G.number_of_nodes()}")
+    print(f"边数量：{G.number_of_edges()}")
+    print(f"总数量：{G.number_of_nodes() + G.number_of_edges()}")
 
 def nx_to_nodes_edges(g:nx.MultiDiGraph):
     ''''

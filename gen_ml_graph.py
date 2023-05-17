@@ -1,3 +1,4 @@
+import copy
 import os
 import random
 import networkx as nx
@@ -5,7 +6,8 @@ import numpy
 import pandas
 
 from tools import split_float, split_int, merge_graph, nx_to_csv
-
+from plt_plot import plot_graph_from_nx
+from neo4j_plot.AutoLoader import nx_to_neo4j, nx_to_nodes_edges
 
 class MLGraph():
     '''
@@ -20,7 +22,7 @@ class MLGraph():
         self.components = dict()  # name : [sub_g, name, cotype, accounts, amounts, steps]
         self.turnover = margin_ratio
         self.alertid = alertid
-        self.n_edges = 0
+        self.latest_edge_id = 0
 
     def shuffle_ids(self):
         random.shuffle(self.account_ids)
@@ -182,9 +184,9 @@ class MLGraph():
                 if amount != 0:
                     # 添加交易
                     sub_g.add_edge(l_account, account,
-                                   id=self.n_edges, amount=amount, step=step,
+                                   id=self.latest_edge_id, amount=amount, step=step,
                                    coname=coname, cotype=cotype, alertid=self.alertid, issar=True)
-                    self.n_edges += 1
+                    self.latest_edge_id += 1
                     # 减去发出金额账户拥有的资金
                     self.G.nodes[l_account]['amounts'] = round((self.G.nodes[l_account]['amounts'] - amount), 1)
         # 合并
@@ -255,6 +257,39 @@ class MLGraph():
                                        'accounts': accounts, 'amounts': amounts, 'steps': steps,
                                        'cotype': cotype, 'coname': coname, 'issar': True, 'alert_id': self.alertid}
 
+    def cvt_edge_to_edges(self):
+        '''
+        检查图中的所有边，将单边转换为多边。
+        '''
+        # 单转多
+        func_n_edges_rand = lambda x=0: numpy.random.choice([1, 2, 3, 4], p=[0.1, 0.3, 0.5, 0.1])
+
+        # 建立 G 的拷贝 GM
+        GM = self.G.copy()
+
+        # 遍历图G的所有边
+        for src, dst, attr_dict in self.G.edges.data():
+            # 将当前边拆分成多条边，边上的amount属性拆分成相同的金额，边上的step属性和其他属性拷贝一份就可以。生成的边的数量由func_n_edges_rand生成。
+            n_multi_edges = func_n_edges_rand()
+            new_ids = [self.latest_edge_id + i for i in range(n_multi_edges)] # 拆分后的边的id
+            new_amounts = split_float(attr_dict['amount'], n_multi_edges) # 拆分后的金额
+            new_amounts = [round(a, 1) for a in new_amounts] # 保留一位小数
+
+            # 更新 latest_edge_id
+            self.latest_edge_id += n_multi_edges
+
+            # 删除当前边
+            GM.remove_edge(src, dst)
+
+            # 添加新边
+            for id, amount in zip(new_ids, new_amounts):
+                new_attr_dict = attr_dict.copy() # 拷贝属性
+                new_attr_dict.update({'id': id}) # 更新id
+                new_attr_dict.update({'amount': amount}) # 更新金额
+                GM.add_edge(src, dst, **new_attr_dict)
+
+        # 替换 self.G
+        self.G = GM
 
 def end():
     pass
@@ -262,6 +297,7 @@ def end():
 
 # %%
 if __name__ == "__main__":
+    print(os.getcwd())
     # 【demo】
     # 单收集 - 单节点 - 单分散
     mlg = MLGraph(id_start=0, id_end=250, margin_ratio=0.999, alertid=1)
@@ -269,6 +305,9 @@ if __name__ == "__main__":
     mlg.add_n_to_n(coname='c2', lname='c1', n=3, period=1, target_ids=[])
     mlg.add_n_to_n_prob(coname='c3', lname='c2', n=5, period=1, prob=0.5, target_ids=[])
     mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=-1)
+
+    # 单边转多边
+    mlg.cvt_edge_to_edges()
 
     G = mlg.get_graph()
 
@@ -281,12 +320,14 @@ if __name__ == "__main__":
     # mlg.split_components(lname='', n_accounts=[], conames=[])
     # mlg.merge_components(coname='', lnames=[])
 
-    # plt显示
-    from plt_plot import plot_graph_from_nx
+    # 打印
+    for x in G.edges.data():
+        print(x)
 
-    plot_graph_from_nx(G)
+    # nodes, edges = nx_to_nodes_edges(G)
+
+    # plt显示
+    # plot_graph_from_nx(G)
 
     # neo4j导入
-    from neo4j_plot.autoloader import nx_to_neo4j
-
     nx_to_neo4j(G)

@@ -39,18 +39,37 @@ class Py2Neo4j(threading.Thread):
 
     def write(self, graph, n_label, r_label, sub_r_attrs):
         for r_attrs in sub_r_attrs:
-            n_attrs1 = {'id': r_attrs['src']}
-            n_attrs2 = {'id': r_attrs['dst']}
+            # 使用 Relationship创建，存在无法创建多重边的问题
+            # n_attrs1 = {'id': r_attrs['src']}
+            # n_attrs2 = {'id': r_attrs['dst']}
+            #
+            # del r_attrs['src']
+            # del r_attrs['dst']
+            #
+            # # 使用 graph.create创建
+            # n1 = self.match_node(graph, n_label, n_attrs1)
+            # n2 = self.match_node(graph, n_label, n_attrs2)
+            # if n1 is None or n2 is None:
+            #     return False
+            # r = Relationship(n1, r_label, n2, **r_attrs)
+            # graph.create(r)
 
+            # 使用 cypher语句创建，可以创建多重边
+            src_id = r_attrs['src']
+            dst_id = r_attrs['dst']
             del r_attrs['src']
             del r_attrs['dst']
 
-            n1 = self.match_node(graph, n_label, n_attrs1)
-            n2 = self.match_node(graph, n_label, n_attrs2)
-            if n1 is None or n2 is None:
-                return False
-            r = Relationship(n1, r_label, n2, **r_attrs)
-            graph.create(r)
+            _sig = "'"
+            string_attr_dict = "{" + ", ".join(
+                [f"{key}:{value if isinstance(value, (int, float, bool)) else _sig + value + _sig}" for key, value in
+                 r_attrs.items()]) + "}"
+
+            cyhper = f"MATCH (src:{n_label}),(dst:{n_label}) " \
+                     f"WHERE src.id = {src_id} AND dst.id = {dst_id} " \
+                     f"CREATE (src)-[r:{r_label} {string_attr_dict}]->(dst)"
+
+            graph.run(cyhper)
 
     def process(self, thread_name, q: queue.Queue):
         # 连接数据库
@@ -69,6 +88,7 @@ class Py2Neo4j(threading.Thread):
 
     def run(self):
         self.process(self.name, self.q)
+
 
 def gen_lst_data(nodes):
     lst_data = list()

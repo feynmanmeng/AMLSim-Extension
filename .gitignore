@@ -6,3 +6,8 @@
 *.iml
 out
 gen
+
+# data directory
+/data
+/algo
+/old

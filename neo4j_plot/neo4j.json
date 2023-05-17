@@ -2,5 +2,5 @@
   "username": "neo4j",
   "password": "feynmanneo4j",
   "database": "neo4j",
-  "port": "7693"
+  "port": "7695"
 }
