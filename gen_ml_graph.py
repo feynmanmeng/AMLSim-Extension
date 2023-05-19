@@ -7,7 +7,7 @@ import pandas
 
 from tools import split_float, split_int, merge_graph, nx_to_csv
 from plt_plot import plot_graph_from_nx
-from neo4j_plot.AutoLoader import nx_to_neo4j, nx_to_nodes_edges
+from neo4j_plot.auto_loader import nx_to_neo4j, nx_to_nodes_edges
 
 class MLGraph():
     '''

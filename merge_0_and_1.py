@@ -2,7 +2,7 @@ import os
 import pandas
 import networkx as nx
 
-from neo4j_plot.AutoLoader import nodes_edges_to_nx, nx_to_neo4j
+from neo4j_plot.auto_loader import nodes_edges_to_nx, nx_to_neo4j
 
 
 class CvtAmlsim():

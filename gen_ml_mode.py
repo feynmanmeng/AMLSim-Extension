@@ -2,7 +2,7 @@ import os
 import pandas
 import networkx as nx
 from gen_ml_graph import MLGraph
-from neo4j_plot.AutoLoader import nx_to_neo4j
+from neo4j_plot.auto_loader import nx_to_neo4j
 from plt_plot import plot_graph_from_nx
 
 class MLMode():

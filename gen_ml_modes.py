@@ -3,7 +3,7 @@ import os
 import networkx as nx
 import pandas
 
-from neo4j_plot.AutoLoader import nx_to_neo4j, nx_to_nodes_edges, nodes_edges_to_nx
+from neo4j_plot.auto_loader import nx_to_neo4j, nx_to_nodes_edges, nodes_edges_to_nx
 from plt_plot import plot_graph_from_nx
 from tools import nx_to_csv
 from gen_ml_mode import MLMode
