@@ -47,29 +47,47 @@ def nx_to_nodes_edges(G:nx.MultiDiGraph):
     格式要求：
         节点：第一列名字叫 id，其他属性
         边：第一列 src，第二列 dst，第三列建议是 id，其他属性
+
+    除了所有属性都一致的表格。还可以支持属性不一致，属性遗漏的图添加
     '''
-    nodes = []
-    edges = []
 
-    for u, c in G.nodes.data():
-        per = list()
-        per.extend([u])
-        per.extend(list(c.values()))
-        nodes.append(per)
-    # 上面已经保存了所有数据，后面就是命名columns，对于node第一列是nodeid，之后是所有属性
-    columns = ['id']
-    columns.extend(list(c.keys()))
-    nodes = pandas.DataFrame(nodes, columns=columns)
 
-    for u, v, c in G.edges.data():
-        per = list()
-        per.extend([u, v])
-        per.extend(list(c.values()))
-        edges.append(per)
-    # 上面已经保存了所有数据，后面就是命名columns，对于edge前两列是src和dst，之后是所有属性
-    columns = ['src', 'dst']
-    columns.extend(list(c.keys()))
-    edges = pandas.DataFrame(edges, columns=columns)
+    # 1. 制作 col_names，确保涵盖所有可能的属性
+    node_col_names = set() # 节点
+    for _, attr_dict in G.nodes.data():
+        node_col_names.update(attr_dict.keys())
+    node_col_names = list(node_col_names)
+    node_col_names.insert(0, 'id')
+
+    edges_col_names = set()  # 边
+    for _,_, attr_dict in G.edges.data():
+        edges_col_names.update(attr_dict.keys())
+    edges_col_names = list(edges_col_names)
+    edges_col_names.insert(0, 'src')
+    edges_col_names.insert(1, 'dst')
+
+
+    # 2. 生成 nodes 和 edges 空列表；在准确的位置添加有值的 col_name_value
+    nodes = [[None for _ in range(len(node_col_names))] for _ in range(G.number_of_nodes())] # 节点
+    for i, (nid, attr_dict) in enumerate(G.nodes.data()):
+        nodes[i][0] = nid # 第一列是 nodeid
+        for k, v in attr_dict.items():
+            # 之后是所有属性，位置是 col_names.index(k)
+            nodes[i][node_col_names.index(k)] = v
+    nodes = pandas.DataFrame(nodes, columns=node_col_names)
+
+    edges = [[None for _ in range(len(edges_col_names))] for _ in range(G.number_of_edges())] # 边
+    for i, (src, dst, attr_dict) in enumerate(G.edges.data()):
+        edges[i][0] = src # 第一列是 src
+        edges[i][1] = dst # 第二列是 dst
+        for k, v in attr_dict.items():
+            # 之后是所有属性，位置是 col_names.index(k)
+            edges[i][edges_col_names.index(k)] = v
+    edges = pandas.DataFrame(edges, columns=edges_col_names)
+
+    # 3. 填充nan
+    nodes = nodes.fillna(-1)
+    edges = edges.fillna(-1)
 
     return nodes, edges
 

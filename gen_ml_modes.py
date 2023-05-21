@@ -30,8 +30,8 @@ class MLS():
 
     def combination_SML(self):
         mlm = MLMode()
-        g1 = mlm.m_SML(id_start=0, id_end=500, start=1, alertid=1)
-        g2 = mlm.m_SML(id_start=500, id_end=1000, start=30, alertid=2)
+        g1 = mlm.m_SML(id_start=0, id_end=500, start=5, alertid=1)
+        g2 = mlm.m_SML(id_start=500, id_end=1000, start=35, alertid=2)
         nodes, edges = merge_gs([g1, g2])
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
@@ -39,8 +39,8 @@ class MLS():
 
     def combination_CML(self):
         mlm = MLMode()
-        g1 = mlm.m_CML(id_start=0, id_end=500, start=1, alertid=1)
-        g2 = mlm.m_CML(id_start=500, id_end=1000, start=30, alertid=2)
+        g1 = mlm.m_CML(id_start=0, id_end=500, start=5, alertid=1)
+        g2 = mlm.m_CML(id_start=500, id_end=1000, start=35, alertid=2)
         nodes, edges = merge_gs([g1, g2])
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
@@ -48,8 +48,8 @@ class MLS():
 
     def combination_TGS(self):
         mlm = MLMode()
-        g1 = mlm.m_TGS(id_start=0, id_end=500, start=1, alertid=1)
-        g2 = mlm.m_TGS(id_start=500, id_end=1000, start=30, alertid=2)
+        g1 = mlm.m_TGS(id_start=0, id_end=500, start=5, alertid=1)
+        g2 = mlm.m_TGS(id_start=500, id_end=1000, start=35, alertid=2)
         nodes, edges = merge_gs([g1, g2])
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
@@ -57,8 +57,8 @@ class MLS():
 
     def combination_TSG(self):
         mlm = MLMode()
-        g1 = mlm.m_TSG(id_start=0, id_end=500, start=1, alertid=1)
-        g2 = mlm.m_TSG(id_start=500, id_end=1000, start=30, alertid=2)
+        g1 = mlm.m_TSG(id_start=0, id_end=500, start=5, alertid=1)
+        g2 = mlm.m_TSG(id_start=500, id_end=1000, start=35, alertid=2)
         nodes, edges = merge_gs([g1, g2])
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)

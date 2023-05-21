@@ -76,6 +76,7 @@ def merge_amlsim(path, sar = "SML", normal = "1k_90"):
 
     # 合并
     nodes, edges = merge_normal_sar(path, nodes_sar, nodes_normal, edges_sar, edges_normal)
+    print(f"完成：{path}\t{sar}\t{normal}")
 
 def merge_real():
     # 读取 2组各 2个文件

@@ -54,5 +54,11 @@ def view_std_graph_folder(path):
 
 view_std_graph_folder("data/sar/SML")
 
+#%% 从pkl加载图
+from my_save import load_pkl
+from neo4j_plot.auto_loader import nx_to_neo4j
+G = load_pkl("data/", "G_ob.pkl")
+nx_to_neo4j(G)
+
 # %% end
 print("end")

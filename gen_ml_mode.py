@@ -139,7 +139,7 @@ class MLMode():
         mlg = MLGraph(id_start=id_start, id_end=id_end, margin_ratio=0.999, alertid=alertid)
         # mlg.shuffle_ids()
         mlg.add_n(coname='c1', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
-        mlg.add_1_to_n(coname='c2', lname='c1', n=4, period=1, target_ids=[])
+        mlg.add_n_to_n(coname='c2', lname='c1', n=4, period=1, target_ids=[])
         mlg.add_n_to_n(coname='c3', lname='c2', n=6, period=1, target_ids=[])
         mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=CNID[0]) # cycle_nodeid
         mlg.add_n_to_n(coname='c5', lname='c4', n=4, period=1, target_ids=[])
