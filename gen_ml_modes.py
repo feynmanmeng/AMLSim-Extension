@@ -73,15 +73,21 @@ def end():
 #%%
 if __name__ == '__main__':
     mls = MLS()
-    G = mls.combination_TSG()
 
+    G = mls.combination_SML()
+    nx_to_csv(G, path="./data/sar/SML/")
+    G = mls.combination_CML()
+    nx_to_csv(G, path="./data/sar/CML/")
+    G = mls.combination_TGS()
+    nx_to_csv(G, path="./data/sar/TGS/")
+    G = mls.combination_TSG()
     nx_to_csv(G, path="./data/sar/TSG/")
 
     # plt显示
     # plot_graph_from_nx(G)
 
     # neo4j导入
-    nx_to_neo4j(G)
+    # nx_to_neo4j(G)
 
 
 

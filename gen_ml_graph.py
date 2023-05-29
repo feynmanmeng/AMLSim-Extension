@@ -14,7 +14,7 @@ class MLGraph():
     os.getcwd()
     '''
 
-    def __init__(self, id_start=1, id_end=250, margin_ratio=0.99, alertid=1):
+    def __init__(self, id_start=1, id_end=250, latest_edge_id=0, margin_ratio=0.99, alertid=1):
         self.G = nx.MultiDiGraph()  # 交易图
         self.id_start = id_start  # 账户id范围起点
         self.id_end = id_end  # 账户id范围终点
@@ -22,13 +22,16 @@ class MLGraph():
         self.components = dict()  # name : [sub_g, name, cotype, accounts, amounts, steps]
         self.turnover = margin_ratio
         self.alertid = alertid
-        self.latest_edge_id = 0
+        self.latest_edge_id = latest_edge_id
 
     def shuffle_ids(self):
         random.shuffle(self.account_ids)
 
     def get_graph(self):
         return self.G
+
+    def get_latest_edge_id(self):
+        return self.latest_edge_id
 
     def get_components(self, component_name=None):
         if component_name == None:
