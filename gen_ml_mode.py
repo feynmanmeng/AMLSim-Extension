@@ -1,9 +1,6 @@
-import os
-import pandas
-import networkx as nx
 from gen_ml_graph import MLGraph
 from neo4j_plot.auto_loader import nx_to_neo4j
-from plt_plot import plot_graph_from_nx
+
 
 class MLMode():
     '''
@@ -11,13 +8,7 @@ class MLMode():
 
     def __init__(self):
         self.gs = dict()  # {name : g}
-        # self.info = '说明'
-        # self.g_name = 'graph_id'
-        # self.id_start = 0
-        # self.id_end = 1e3
-        # self.start_step = 0
-        # self.margin_ratio = 0.99
-        # self.alertid = 1 # 异常
+        self.latest_edge_id = 0
 
     def get_graph(self, name=None):
         if name == None:
@@ -111,10 +102,10 @@ class MLMode():
         '''
 
         NCNID = 100
-        CNID = [id_end - NCNID + x for x in range(1, NCNID)] # customized node id，自动分配占前面，手动分配占后100个
+        CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
 
         g_name = 'm5'
-        mlg = MLGraph(id_start=id_start, id_end=id_end, margin_ratio=0.999, alertid=alertid)
+        mlg = MLGraph(id_start, id_end, self.latest_edge_id, margin_ratio=0.999, alertid=alertid)
         # mlg.shuffle_ids()
         mlg.add_n(coname='c1', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
         mlg.add_n_to_1(coname='c2', lname='c1', period=1, target_id=-1)
@@ -128,6 +119,7 @@ class MLMode():
         mlg.cvt_edge_to_edges()
         g = mlg.get_graph()
         self.gs[g_name] = g
+        self.latest_edge_id = mlg.get_latest_edge_id() + 1
         return g
 
     def m_CML(self, id_start=0, id_end=500, start=1, alertid=1):
@@ -136,23 +128,24 @@ class MLMode():
         CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
 
         g_name = 'm6'
-        mlg = MLGraph(id_start=id_start, id_end=id_end, margin_ratio=0.999, alertid=alertid)
+        mlg = MLGraph(id_start, id_end, self.latest_edge_id, margin_ratio=0.999, alertid=alertid)
         # mlg.shuffle_ids()
         mlg.add_n(coname='c1', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
-        mlg.add_n_to_n(coname='c2', lname='c1', n=4, period=1, target_ids=[])
-        mlg.add_n_to_n(coname='c3', lname='c2', n=6, period=1, target_ids=[])
-        mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=CNID[0]) # cycle_nodeid
-        mlg.add_n_to_n(coname='c5', lname='c4', n=4, period=1, target_ids=[])
-        mlg.add_1_to_n(coname='c6', lname='c5', n=8, period=1, target_ids=[])
-        mlg.add_n_to_n(coname='c7', lname='c6', n=5, period=1, target_ids=[])
-        mlg.add_n_to_n(coname='c8', lname='c7', n=8, period=1, target_ids=[])
-        mlg.add_n_to_n(coname='c9', lname='c8', n=4, period=1, target_ids=[])
-        mlg.add_n_to_1(coname='c10', lname='c9', period=1, target_id=CNID[0]) # cycle_nodeid
-        mlg.add_1_to_1(coname='c11', lname='c10', period=1, target_id=-1)
-        mlg.add_1_to_n(coname='c12', lname='c11', n=5, period=1, target_ids=[])
+        mlg.add_n_to_1(coname='c2', lname='c1', period=1, target_id=-1)
+        mlg.add_n_to_n(coname='c3', lname='c2', n=4, period=1, target_ids=[])
+        mlg.add_n_to_n(coname='c4', lname='c3', n=6, period=1, target_ids=[])
+        mlg.add_n_to_1(coname='c5', lname='c4', period=1, target_id=CNID[0])  # cycle_nodeid
+        mlg.add_n_to_n(coname='c6', lname='c5', n=4, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='c7', lname='c6', n=8, period=1, target_ids=[])
+        mlg.add_n_to_n(coname='c8', lname='c7', n=5, period=1, target_ids=[])
+        mlg.add_n_to_n(coname='c9', lname='c8', n=8, period=1, target_ids=[])
+        mlg.add_n_to_n(coname='c10', lname='c9', n=4, period=1, target_ids=[])
+        mlg.add_n_to_1(coname='c11', lname='c10', period=1, target_id=CNID[0])  # cycle_nodeid
+        mlg.add_1_to_n(coname='c12', lname='c11', n=8, period=1, target_ids=[])
         mlg.cvt_edge_to_edges()
         g = mlg.get_graph()
         self.gs[g_name] = g
+        self.latest_edge_id = mlg.get_latest_edge_id() + 1
         return g
 
     def m_TGS(self, id_start=0, id_end=500, start=1, alertid=1):
@@ -161,32 +154,33 @@ class MLMode():
         CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
 
         g_name = 'm7'
-        mlg = MLGraph(id_start=id_start, id_end=id_end, margin_ratio=0.999, alertid=alertid)
+        mlg = MLGraph(id_start, id_end, self.latest_edge_id, margin_ratio=0.999, alertid=alertid)
         # mlg.shuffle_ids()
         mlg.add_n(coname='c1', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
         mlg.add_n_to_1(coname='c2', lname='c1', period=1, target_id=-1)
         mlg.add_n(coname='c3', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
-        mlg.merge_components(coname='c4', lnames=['c2', 'c3']) # 第一次合并
+        mlg.merge_components(coname='c4', lnames=['c2', 'c3'])  # 第一次合并
         mlg.add_n_to_1(coname='c5', lname='c4', period=1, target_id=-1)
         mlg.add_n(coname='c6', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
-        mlg.merge_components(coname='c7', lnames=['c5', 'c6']) # 第二次合并
+        mlg.merge_components(coname='c7', lnames=['c5', 'c6'])  # 第二次合并
         mlg.add_n_to_1(coname='c8', lname='c7', period=1, target_id=-1)
         mlg.add_1_to_n(coname='c9', lname='c8', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='c10', lname='c9', n=5, period=1, target_ids=[])
         mlg.add_n_to_1(coname='c11', lname='c10', period=1, target_id=-1)
-        mlg.add_1_to_n(coname='c12', lname='c11', n=2, period=1, target_ids=[]) # 第一层分叉
+        mlg.add_1_to_n(coname='c12', lname='c11', n=2, period=1, target_ids=[])  # 第一层分叉
         mlg.split_components(lname='c12', n_accounts=[1, 1], conames=['s1', 's2'])
         mlg.add_1_to_n(coname='s1_1', lname='s1', n=2, period=1, target_ids=[])
         mlg.add_1_to_n(coname='s2_1', lname='s2', n=2, period=1, target_ids=[])
-        mlg.split_components(lname='s1_1', n_accounts=[1, 1], conames=['ss1', 'ss2']) # 第二层分支
+        mlg.split_components(lname='s1_1', n_accounts=[1, 1], conames=['ss1', 'ss2'])  # 第二层分支
         mlg.split_components(lname='s2_1', n_accounts=[1, 1], conames=['ss3', 'ss4'])
-        mlg.add_1_to_n(coname='ss1_1', lname='ss1', n=5, period=1, target_ids=[]) # 第三层展开
-        mlg.add_1_to_n(coname='ss2_1', lname='ss2', n=5, period=1, target_ids=[])
-        mlg.add_1_to_n(coname='ss3_1', lname='ss3', n=5, period=1, target_ids=[])
-        mlg.add_1_to_n(coname='ss4_1', lname='ss4', n=5, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='ss1_1', lname='ss1', n=8, period=1, target_ids=[])  # 第三层展开
+        mlg.add_1_to_n(coname='ss2_1', lname='ss2', n=8, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='ss3_1', lname='ss3', n=8, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='ss4_1', lname='ss4', n=8, period=1, target_ids=[])
         mlg.cvt_edge_to_edges()
         g = mlg.get_graph()
         self.gs[g_name] = g
+        self.latest_edge_id = mlg.get_latest_edge_id() + 1
         return g
 
     def m_TSG(self, id_start=0, id_end=500, start=1, alertid=1):
@@ -195,7 +189,7 @@ class MLMode():
         CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
 
         g_name = 'm8'
-        mlg = MLGraph(id_start=id_start, id_end=id_end, margin_ratio=0.999, alertid=alertid)
+        mlg = MLGraph(id_start, id_end, self.latest_edge_id, margin_ratio=0.999, alertid=alertid)
         # mlg.shuffle_ids()
         mlg.add_n(coname='c1', n=25, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
         mlg.add_n_to_1(coname='s1', lname='c1', period=1, target_id=-1)
@@ -232,7 +226,7 @@ class MLMode():
         mlg.add_n_to_n(coname='21', lname='m5', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='22', lname='21', n=5, period=1, target_ids=[])
         mlg.merge_components(coname='m6', lnames=['15', '22'])
-        mlg.add_n_to_1(coname='23', lname='m6', period=1, target_id=CNID[0]) # loop_index
+        mlg.add_n_to_1(coname='23', lname='m6', period=1, target_id=CNID[0])  # loop_index
         mlg.add_1_to_n(coname='24', lname='23', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='25', lname='24', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='26', lname='25', n=5, period=1, target_ids=[])
@@ -240,15 +234,16 @@ class MLMode():
         mlg.add_1_to_n(coname='28', lname='27', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='29', lname='28', n=5, period=1, target_ids=[])
         mlg.add_n_to_n(coname='30', lname='29', n=5, period=1, target_ids=[])
-        mlg.add_n_to_1(coname='loop', lname='30', period=1, target_id=CNID[0]) # loop_index
+        mlg.add_n_to_1(coname='loop', lname='30', period=1, target_id=CNID[0])  # loop_index
         mlg.add_1_to_1(coname='sp', lname='loop', period=1, target_id=-1)
         mlg.add_1_to_1(coname='31', lname='sp', period=1, target_id=-1)
-        mlg.add_1_to_n(coname='32', lname='31', n=5, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='32', lname='31', n=8, period=1, target_ids=[])
         mlg.split_components(lname='32', n_accounts=[1, 4], conames=['33', '34'])
-        mlg.add_1_to_n(coname='35', lname='33', n=5, period=1, target_ids=[])
+        mlg.add_1_to_n(coname='35', lname='33', n=8, period=1, target_ids=[])
         mlg.cvt_edge_to_edges()
         g = mlg.get_graph()
         self.gs[g_name] = g
+        self.latest_edge_id = mlg.get_latest_edge_id() + 1
         return g
 
     def m_cal_split_point(self, g_name='g'):
@@ -301,15 +296,16 @@ class MLMode():
 
         # return g
 
+
 def end():
     pass
 
 
-# %%
 if __name__ == '__main__':
+    _ = None
     # 创建洗钱结构
     mlm = MLMode()
-    G = mlm.m8()
+    G = mlm.m_cal_split_point()
     # G = mlm.m_cal_split_point()
 
     # plt显示
@@ -319,4 +315,3 @@ if __name__ == '__main__':
     nx_to_neo4j(G)
 
     # 房贷AUtozhong ，o2左右时间逻辑重新构思
-
