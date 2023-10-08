@@ -1,5 +1,6 @@
 from gen_ml_graph import MLGraph
-from neo4j_plot.auto_loader import nx_to_neo4j
+from my_matplotlib_plot import plot_graph_from_nx
+from neo4j_plot.auto_loader import load_to_neo4j
 
 
 class MLMode():
@@ -61,7 +62,7 @@ class MLMode():
         self.gs[g_name] = g
         return g
 
-    def m4(self, info='树状收集 - 多部图 - 单分散'):
+    def m4_未更新(self, info='树状收集 - 多部图 - 单分散'):
         g_name = 'm4'
         mlg = MLGraph(id_start=0, id_end=250, margin_ratio=0.999, alertid=1)
         mlg.shuffle_ids()
@@ -305,13 +306,14 @@ if __name__ == '__main__':
     _ = None
     # 创建洗钱结构
     mlm = MLMode()
-    G = mlm.m_cal_split_point()
+    # G = mlm.m3()
+    G = mlm.m_SML()
     # G = mlm.m_cal_split_point()
 
     # plt显示
-    # plot_graph_from_nx(G)
+    plot_graph_from_nx(G)
 
     # neo4j导入
-    nx_to_neo4j(G)
+    load_to_neo4j(G)
 
     # 房贷AUtozhong ，o2左右时间逻辑重新构思

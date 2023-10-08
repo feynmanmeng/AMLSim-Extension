@@ -2,8 +2,8 @@ import os
 
 import pandas
 
-from neo4j_plot.auto_loader import nodes_edges_to_nx, nx_to_neo4j
-
+from my_networkx.dataframe import nodes_edges_to_nx
+from neo4j_plot.auto_loader import load_to_neo4j
 
 class CvtAmlsim():
     def __init__(self):
@@ -98,7 +98,7 @@ def view_std_graph_folder(path):
     nodes = pandas.read_csv(os.path.join(path, 'nodes.csv'))
     edges = pandas.read_csv(os.path.join(path, 'edges.csv'))
     G = nodes_edges_to_nx(nodes, edges)
-    nx_to_neo4j(G)
+    load_to_neo4j(G)
 
 
 def end():

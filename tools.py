@@ -3,7 +3,7 @@ import random
 import pandas
 import networkx as nx
 
-from neo4j_plot.auto_loader import nx_to_nodes_edges
+from my_networkx.dataframe import nx_to_nodes_edges
 
 
 def split_float(amount, n_sep, variation = 0.35)->list:
