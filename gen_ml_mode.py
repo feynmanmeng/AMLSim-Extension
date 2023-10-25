@@ -306,8 +306,8 @@ if __name__ == '__main__':
     _ = None
     # 创建洗钱结构
     mlm = MLMode()
-    # G = mlm.m3()
-    G = mlm.m_SML()
+    G = mlm.m1()
+    # G = mlm.m_SML()
     # G = mlm.m_cal_split_point()
 
     # plt显示
