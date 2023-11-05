@@ -4,7 +4,7 @@ import random
 import networkx as nx
 import numpy
 
-from neo4j_plot.auto_loader import load_to_neo4j
+from networkx_to_neo4j.auto_loader import AutoLoader
 from tools import split_float, merge_graph
 
 

@@ -2,7 +2,7 @@ import networkx as nx
 import pandas
 
 from gen_ml_mode import MLMode
-from my_networkx.dataframe import nx_to_nodes_edges, nodes_edges_to_nx
+from my_networkx.convert import nx_to_nodes_edges, nodes_edges_to_nx
 from tools import nx_to_csv
 
 

@@ -8,7 +8,6 @@ out
 gen
 
 # data directory
-/data/
-/algo/
-/old/
-/my_tools/
+AMLSim-Extension/data
+AMLSim-Extension/algo
+AMLSim-Extension/old
