@@ -1,11 +1,9 @@
-import os
 import random
 
 import networkx as nx
 import numpy
 
-from networkx_to_neo4j.auto_loader import AutoLoader
-from tools import split_float, merge_graph
+from tools import split_float, merge_two_graphes
 
 
 class MLGraph():
@@ -65,7 +63,7 @@ class MLGraph():
                      zip(accounts, amounts, steps)]
         sub_g.add_nodes_from(new_nodes)
         # 合并
-        self.G = merge_graph(self.G, sub_g)
+        self.G = merge_two_graphes(self.G, sub_g)
         # 记录
         self.components[coname] = {'sub_g': sub_g,
                                    'accounts': accounts, 'amounts': amounts, 'steps': steps,
@@ -192,7 +190,7 @@ class MLGraph():
                     # 减去发出金额账户拥有的资金
                     self.G.nodes[l_account]['amounts'] = round((self.G.nodes[l_account]['amounts'] - amount), 1)
         # 合并
-        self.G = merge_graph(self.G, sub_g)
+        self.G = merge_two_graphes(self.G, sub_g)
         # 记录
         self.components[coname] = {'sub_g': sub_g,
                                    'accounts': accounts, 'amounts': amounts, 'steps': steps,
@@ -220,7 +218,7 @@ class MLGraph():
                      zip(accounts, amounts, steps)]
         sub_g.add_nodes_from(new_nodes)
         # 合并（更新信息）
-        self.G = merge_graph(self.G, sub_g)
+        self.G = merge_two_graphes(self.G, sub_g)
         # 记录
         self.components[coname] = {'sub_g': sub_g,
                                    'accounts': accounts, 'amounts': amounts, 'steps': steps,
@@ -253,7 +251,7 @@ class MLGraph():
                          zip(accounts, amounts, steps)]
             sub_g.add_nodes_from(new_nodes)
             # 合并（更新信息）
-            self.G = merge_graph(self.G, sub_g)
+            self.G = merge_two_graphes(self.G, sub_g)
             # 记录
             self.components[coname] = {'sub_g': sub_g,
                                        'accounts': accounts, 'amounts': amounts, 'steps': steps,
@@ -293,44 +291,3 @@ class MLGraph():
 
         # 替换 self.G
         self.G = GM
-
-
-def end():
-    pass
-
-
-if __name__ == "__main__":
-    print(os.getcwd())
-    # 【demo】
-    # 单收集 - 单节点 - 单分散
-    mlg = MLGraph(id_start=0, id_end=250, margin_ratio=0.999, alertid=1)
-    mlg.add_n(coname='c1', n=3, min_amount=1000, max_amount=1000, start=1, period=0, target_ids=[])
-    mlg.add_n_to_n(coname='c2', lname='c1', n=3, period=1, target_ids=[])
-    mlg.add_n_to_n_prob(coname='c3', lname='c2', n=5, period=1, prob=0.5, target_ids=[])
-    mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=-1)
-
-    # 单边转多边
-    mlg.cvt_edge_to_edges()
-
-    G = mlg.get_graph()
-
-    # mlg.add_n(coname='', n=, min_amount=1000, max_amount=1000, start=1, period=0, target_ids=[])
-    # mlg.add_1_to_1(coname='', lname='', period=1, target_id=-1)
-    # mlg.add_n_to_1(coname='', lname='', period=1, target_id=-1)
-    # mlg.add_1_to_n(coname='', lname='', n=, period=1, target_ids=[])
-    # mlg.add_n_to_n(coname='', lname='', n=, period=1, target_ids=[])
-    # mlg.add_n_to_n_prob(coname='', lname='', n=, period=1, prob=0.5, target_ids=[])
-    # mlg.split_components(lname='', n_accounts=[], conames=[])
-    # mlg.merge_components(coname='', lnames=[])
-
-    # 打印
-    for x in G.edges.data():
-        print(x)
-
-    # nodes, edges = nx_to_nodes_edges(G)
-
-    # plt显示
-    # plot_graph_from_nx(G)
-
-    # neo4j导入
-    load_to_neo4j(G)

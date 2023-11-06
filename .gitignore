@@ -8,6 +8,8 @@ out
 gen
 
 # data directory
+.pytest_cache
+
 AMLSim-Extension/data
 AMLSim-Extension/algo
 AMLSim-Extension/old
