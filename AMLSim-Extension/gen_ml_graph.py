@@ -3,8 +3,8 @@ import random
 import networkx as nx
 import numpy
 
-from tools import split_float, merge_two_graphes
-
+from tools import split_float
+from my_networkx.common import merge_two_graphes
 
 class MLGraph():
     '''
@@ -20,6 +20,8 @@ class MLGraph():
         self.turnover = margin_ratio
         self.alertid = alertid
         self.latest_edge_id = latest_edge_id
+
+        # 加入 latest_time 属性
 
     def shuffle_ids(self):
         random.shuffle(self.account_ids)

@@ -1,8 +1,9 @@
 import networkx as nx
-from my_networkx.convert import nodes_edges_to_nx
+from my_networkx.convert import nodes_edges_to_nx, nx_to_nodes_edges
 
 from examples.aml_graph import gen_SML, gen_CML, gen_TGS, gen_TSG
-from tools import nx_to_csv, merge_graphes
+from tools import nx_to_csv
+from my_networkx.common import merge_graphs
 
 
 class AmlGraphMerged():
@@ -22,7 +23,8 @@ class AmlGraphMerged():
         g2 = mlg2.get_graph()
         lei2 = mlg2.get_latest_edge_id() + 1
 
-        nodes, edges = merge_graphes([g1, g2])
+        g_merged = merge_graphs([g1, g2])
+        nodes, edges = nx_to_nodes_edges(g_merged)
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
         return self.G
@@ -36,7 +38,8 @@ class AmlGraphMerged():
         g2 = mlg2.get_graph()
         lei2 = mlg2.get_latest_edge_id() + 1
 
-        nodes, edges = merge_graphes([g1, g2])
+        g_merged = merge_graphs([g1, g2])
+        nodes, edges = nx_to_nodes_edges(g_merged)
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
         return self.G
@@ -50,7 +53,8 @@ class AmlGraphMerged():
         g2 = mlg2.get_graph()
         lei2 = mlg2.get_latest_edge_id() + 1
 
-        nodes, edges = merge_graphes([g1, g2])
+        g_merged = merge_graphs([g1, g2])
+        nodes, edges = nx_to_nodes_edges(g_merged)
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
         return self.G
@@ -64,7 +68,8 @@ class AmlGraphMerged():
         g2 = mlg2.get_graph()
         lei2 = mlg2.get_latest_edge_id() + 1
 
-        nodes, edges = merge_graphes([g1, g2])
+        g_merged = merge_graphs([g1, g2])
+        nodes, edges = nx_to_nodes_edges(g_merged)
         edges['amount'] = edges['amount'].map(lambda x: round(x, 2))
         self.G = nodes_edges_to_nx(nodes, edges)
         return self.G

@@ -45,34 +45,6 @@ def split_int(amount, n_sep, variation=0.35) -> list:
     return out
 
 
-def merge_two_graphes(g1: nx.MultiDiGraph, g2: nx.MultiDiGraph):
-    '''
-    https://www.codenong.com/32652149/
-    '''
-    # 相同属性会合并
-    # g = nx.compose(g1, g2)
-    # g = nx.compose_all([g1, g2])
-
-    # 保留两者的所有值
-    g = nx.MultiDiGraph()
-    g.add_edges_from(list(g1.edges(data=True)) + list(g2.edges(data=True)))
-    g.add_nodes_from(list(g1.nodes(data=True)) + list(g2.nodes(data=True)))
-    return g
-
-
-def merge_graphes(gs):
-    lst_n = []
-    lst_e = []
-    for g in gs:
-        n, e = nx_to_nodes_edges(g)
-        lst_n.append(n)
-        lst_e.append(e)
-    nodes = pandas.concat(lst_n, axis=0)
-    edges = pandas.concat(lst_e, axis=0)
-
-    return nodes, edges
-
-
 def nx_to_csv(G: nx.MultiDiGraph, path="./data"):
     ''''
     将 nx.MultiDigraph 保存为 node edge 的 csv 文件

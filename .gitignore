@@ -7,9 +7,13 @@
 out
 gen
 
+# files
+pytest.ini
+
 # data directory
 .pytest_cache
 
 AMLSim-Extension/data
 AMLSim-Extension/algo
 AMLSim-Extension/old
+tests/data

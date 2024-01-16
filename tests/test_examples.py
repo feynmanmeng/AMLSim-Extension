@@ -1,4 +1,4 @@
-from examples.aml_graph import gen_SML, gen_CML, gen_TGS, gen_TSG
+from examples.aml_graph import gen_SML, gen_CML, gen_TGS, gen_TSG, gen_SML_v2, gen_CML_v2, gen_TGS_v2, gen_TSG_v2
 from examples.aml_graph_merged import AmlGraphMerged
 from examples.other_graph import gen_cal_split_point_graph
 from tools import plot_nx, nx_to_csv
@@ -15,8 +15,18 @@ def test_gen_SML():
     G = mlg.get_graph()
     plot_nx(G=G, use_plt=True, use_neo4j=False)
 
+def test_gen_SML_v2():
+    mlg = gen_SML_v2()
+    G = mlg.get_graph()
+    plot_nx(G=G, use_plt=True, use_neo4j=False)
+
 def test_gen_CML():
     mlg = gen_CML()
+    G = mlg.get_graph()
+    plot_nx(G=G, use_plt=True, use_neo4j=False)
+
+def test_gen_CML_v2():
+    mlg = gen_CML_v2()
     G = mlg.get_graph()
     plot_nx(G=G, use_plt=True, use_neo4j=False)
 
@@ -25,8 +35,18 @@ def test_gen_TGS():
     G = mlg.get_graph()
     plot_nx(G=G, use_plt=True, use_neo4j=False)
 
+def test_gen_TGS_v2():
+    mlg = gen_TGS_v2()
+    G = mlg.get_graph()
+    plot_nx(G=G, use_plt=True, use_neo4j=False)
+
 def test_gen_TSG():
     mlg = gen_TSG()
+    G = mlg.get_graph()
+    plot_nx(G=G, use_plt=True, use_neo4j=False)
+
+def test_gen_TSG_v2():
+    mlg = gen_TSG_v2()
     G = mlg.get_graph()
     plot_nx(G=G, use_plt=True, use_neo4j=False)
 
@@ -44,3 +64,36 @@ def test_generate_all_4_ml_graphes():
 
     G = agm.combination_TSG()
     nx_to_csv(G, path="./data/sar/TSG/")
+
+
+def test_generate_all_4_ml_graph_v2():
+    mlg = gen_SML_v2()
+    G = mlg.get_graph()
+    nx_to_csv(G, path="./data/sar/SML_v2/")
+
+    mlg = gen_CML_v2()
+    G = mlg.get_graph()
+    nx_to_csv(G, path="./data/sar/CML_v2/")
+
+    mlg = gen_TGS_v2()
+    G = mlg.get_graph()
+    nx_to_csv(G, path="./data/sar/TGS_v2/")
+
+    mlg = gen_TSG_v2()
+    G = mlg.get_graph()
+    nx_to_csv(G, path="./data/sar/TSG_v2/")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

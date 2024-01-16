@@ -8,10 +8,8 @@ def gen_SML(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alerti
     :param start: 起始时间
     :param alertid: 警报id
     '''
-
-    NCNID = 100
+    NCNID = 10
     CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
-
     g_name = 'm5'
     mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
     # mlg.shuffle_ids()
@@ -27,13 +25,33 @@ def gen_SML(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alerti
     mlg.cvt_edge_to_edges()
     return mlg
 
-def gen_CML(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
-    '''
-
-    '''
-    NCNID = 100
+def gen_SML_v2(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
     CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
+    g_name = 'SML_v2'
+    mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
+    mlg.add_n(coname='c1', n=10, min_amount=6000, max_amount=9000, start=start, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c2', lname='c1', period=1, target_id=-1)
+    mlg.add_n_to_n(coname='c3', lname='c2', n=6, period=1, target_ids=[])
+    mlg.add_n_to_1(coname='c4', lname='c3', period=1, target_id=-1)
+    mlg.add_1_to_n(coname='c5', lname='c4', n=4, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c6', lname='c5', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c7', lname='c6', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c14', lname='c7', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c15', lname='c14', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c16', lname='c15', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c17', lname='c16', n=4, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c18', lname='c17', n=2, period=1, target_ids=[])
+    mlg.split_components(lname='c18', n_accounts=[1, 1], conames=['c19', 'c20'])
+    mlg.add_1_to_n(coname='c21', lname='c19', n=3, period=1, target_ids=[])
+    mlg.add_1_to_n(coname='c22', lname='c20', n=3, period=1, target_ids=[])
+    mlg.cvt_edge_to_edges()
+    return mlg
 
+
+def gen_CML(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
+    CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
     g_name = 'm6'
     mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
     # mlg.shuffle_ids()
@@ -52,13 +70,54 @@ def gen_CML(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alerti
     mlg.cvt_edge_to_edges()
     return mlg
 
-def gen_TGS(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
-    '''
-
-    '''
-    NCNID = 100
+def gen_CML_v2(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
     CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
+    g_name = 'CML_v2'
+    mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
+    mlg.add_n(coname='c1', n=1, min_amount=6000, max_amount=9000, start=start, period=0, target_ids=[CNID[0]])
+    mlg.add_1_to_n(coname='c2', lname='c1', n=2, period=1, target_ids=[])
+    mlg.add_n_to_1(coname='c3', lname='c2', period=1, target_id=-1)
+    mlg.add_1_to_n(coname='c45', lname='c3', n=2, period=1, target_ids=[CNID[1], CNID[2]])
+    mlg.split_components(lname='c45', n_accounts=[1, 1], conames=['c4', 'c5'])
 
+    mlg.add_n(coname='nc1', n=5, min_amount=2000, max_amount=3000, start=3, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c44', lname='nc1', period=1, target_id=CNID[1])
+
+    mlg.add_n(coname='nc2', n=5, min_amount=2000, max_amount=3000, start=3, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c55', lname='nc2', period=1, target_id=CNID[2])
+
+    mlg.add_1_to_1(coname='c7', lname='c44', period=1, target_id=CNID[3])
+    mlg.add_n(coname='nc3', n=5, min_amount=2000, max_amount=3000, start=4, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c77', lname='nc3', period=1, target_id=CNID[3])
+
+    mlg.add_1_to_1(coname='c6', lname='c55', period=1, target_id=CNID[4])
+    mlg.add_n(coname='nc4', n=5, min_amount=2000, max_amount=3000, start=4, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c66', lname='nc4', period=1, target_id=CNID[4])
+
+    mlg.add_1_to_1(coname='c8', lname='c77', period=1, target_id=CNID[5])
+    mlg.add_n(coname='nc5', n=5, min_amount=2000, max_amount=3000, start=5, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c88', lname='nc5', period=1, target_id=CNID[5])
+
+    mlg.add_1_to_1(coname='c9', lname='c66', period=1, target_id=CNID[6])
+    mlg.add_n(coname='nc6', n=5, min_amount=2000, max_amount=3000, start=5, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c99', lname='nc6', period=1, target_id=CNID[6])
+
+    mlg.merge_components(coname='m8899', lnames=['c88', 'c99'])
+    mlg.add_n_to_1(coname='c10', lname='m8899', period=1, target_id=CNID[0])
+
+    mlg.add_1_to_n(coname='c11', lname='c10', n=4, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c12', lname='c11', n=4, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c13', lname='c12', n=2, period=1, target_ids=[])
+    mlg.add_n_to_1(coname='c14', lname='c13', period=1, target_id=-1)
+    mlg.add_1_to_n(coname='c15', lname='c14', n=6, period=1, target_ids=[])
+
+    mlg.cvt_edge_to_edges()
+    return mlg
+
+def gen_TGS(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
+    CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
     g_name = 'm7'
     mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
     # mlg.shuffle_ids()
@@ -86,13 +145,50 @@ def gen_TGS(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alerti
     mlg.cvt_edge_to_edges()
     return mlg
 
-def gen_TSG(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
-    '''
-
-    '''
-    NCNID = 100
+def gen_TGS_v2(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
     CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
+    g_name = 'TGS_v2'
+    mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
+    mlg.add_n(coname='c1', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n(coname='c2', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n(coname='c3', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n(coname='c4', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n(coname='c5', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n(coname='c6', n=4, min_amount=3000, max_amount=4000, start=start, period=0, target_ids=[])
+    mlg.add_n_to_1(coname='c7', lname='c1', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c8', lname='c2', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c9', lname='c3', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c10', lname='c4', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c11', lname='c5', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c12', lname='c6', period=1, target_id=-1)
+    mlg.merge_components(coname='m78', lnames=['c7', 'c8'])
+    mlg.merge_components(coname='m910', lnames=['c9', 'c10'])
+    mlg.merge_components(coname='m1112', lnames=['c11', 'c12'])
+    mlg.add_n_to_1(coname='c13', lname='m78', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c14', lname='m910', period=1, target_id=-1)
+    mlg.add_n_to_1(coname='c15', lname='m1112', period=1, target_id=-1)
+    mlg.merge_components(coname='m131415', lnames=['c13', 'c14', 'c15'])
+    mlg.add_n_to_n_prob(coname='c16', lname='m131415', n=2, period=1, prob=0.5, target_ids=[])
+    mlg.add_n_to_1(coname='c17', lname='c16', period=1, target_id=-1)
+    mlg.add_1_to_n(coname='m1819', lname='c17', n=2, period=1, target_ids=[])
+    mlg.split_components(lname='m1819', n_accounts=[1, 1], conames=['c18', 'c19'])
+    mlg.add_1_to_n(coname='m2021', lname='c18', n=2, period=1, target_ids=[])
+    mlg.split_components(lname='m2021', n_accounts=[1, 1], conames=['c20', 'c21'])
+    mlg.add_1_to_n(coname='m2223', lname='c19', n=2, period=1, target_ids=[])
+    mlg.split_components(lname='m2223', n_accounts=[1, 1], conames=['c22', 'c23'])
+    mlg.add_1_to_n(coname='c24', lname='c20', n=2, period=1, target_ids=[])
+    mlg.add_1_to_n(coname='c25', lname='c21', n=2, period=1, target_ids=[])
+    mlg.add_1_to_n(coname='c26', lname='c22', n=2, period=1, target_ids=[])
+    mlg.add_1_to_n(coname='c27', lname='c23', n=2, period=1, target_ids=[])
 
+    mlg.cvt_edge_to_edges()
+    return mlg
+
+
+def gen_TSG(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
+    CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
     g_name = 'm8'
     mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
     # mlg.shuffle_ids()
@@ -147,3 +243,34 @@ def gen_TSG(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alerti
     mlg.add_1_to_n(coname='35', lname='33', n=8, period=1, target_ids=[])
     mlg.cvt_edge_to_edges()
     return mlg
+
+def gen_TSG_v2(id_start=0, id_end=500, latest_edge_id=0, margin_ratio=0.999, alertid=1, start=1):
+    NCNID = 10
+    CNID = [id_end - NCNID + x for x in range(1, NCNID)]  # customized node id，自动分配占前面，手动分配占后100个
+    g_name = 'TSG_v2'
+    mlg = MLGraph(id_start, id_end, latest_edge_id, margin_ratio, alertid)
+    mlg.add_n(coname='c1', n=10, min_amount=7000, max_amount=9000, start=start, period=0, target_ids=[])
+    mlg.add_n_to_n(coname='c2', lname='c1', n=2, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c3', lname='c2', n=3, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c4', lname='c3', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c5', lname='c4', n=7, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c6', lname='c5', n=10, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c7', lname='c6', n=10, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c8', lname='c7', n=10, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c9', lname='c8', n=7, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c10', lname='c9', n=5, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c11', lname='c10', n=3, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c12', lname='c11', n=2, period=1, target_ids=[])
+    mlg.add_n_to_n(coname='c13', lname='c12', n=6, period=1, target_ids=[])
+
+    mlg.cvt_edge_to_edges()
+    return mlg
+
+
+
+
+def end():
+    pass
+
+
+
